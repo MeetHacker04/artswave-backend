@@ -46,7 +46,7 @@ userSchema.pre('save', async function(next) {
 const User = mongoose.model('User', userSchema);
 
 // ✅ CORS setup for Vercel and local
-const allowedOrigins = ['http://localhost:3000', 'https://arts-wave.vercel.app'];
+const allowedOrigins = ['https://arts-wave.vercel.app'];
 
 app.use(cors({
     origin: function(origin, callback) {
