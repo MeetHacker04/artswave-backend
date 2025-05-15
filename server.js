@@ -2,7 +2,6 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const path = require('path');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 
@@ -62,13 +61,13 @@ app.use(cors({
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// ✅ Static file setup (if needed for deployment)
-app.use('/assets', express.static(path.join(__dirname, '../client/assets'), { maxAge: '1y' }));
-app.use(express.static(path.join(__dirname, '../client')));
+// *** Removed all static file serving lines below ***
+// app.use('/assets', express.static(path.join(__dirname, '../client/assets'), { maxAge: '1y' }));
+// app.use(express.static(path.join(__dirname, '../client')));
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/index.html'));
-});
+// app.get('/', (req, res) => {
+//     res.sendFile(path.join(__dirname, '../client/index.html'));
+// });
 
 // ✅ Register Route
 app.post('/api/register', async(req, res) => {
