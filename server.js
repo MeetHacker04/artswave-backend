@@ -1,4 +1,4 @@
-require('dotenv').config(); // Load environment variables from .env file
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -11,37 +11,23 @@ const port = process.env.PORT || 3000;
 
 // ✅ MongoDB connection
 const mongoURI = process.env.MONGO_URI;
-
 if (!mongoURI) {
     console.error('❌ MongoDB URI is missing. Please check your .env file');
-    process.exit(1); // Exit if the MongoDB URI is missing
+    process.exit(1);
 }
 
 mongoose.connect(mongoURI)
     .then(() => console.log('✅ Connected to MongoDB Atlas'))
     .catch(err => {
         console.error('❌ MongoDB connection error:', err.message);
-        process.exit(1); // Exit if there is an error connecting to MongoDB
+        process.exit(1);
     });
 
-// ✅ Mongoose schema
+// ✅ Schema
 const userSchema = new mongoose.Schema({
-    username: {
-        type: String,
-        required: true,
-        unique: true,
-        minlength: 3,
-        maxlength: 30
-    },
-    password: {
-        type: String,
-        required: true,
-        minlength: 6
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    },
+    username: { type: String, required: true, unique: true, minlength: 3, maxlength: 30 },
+    password: { type: String, required: true, minlength: 6 },
+    createdAt: { type: Date, default: Date.now },
     lastLogin: Date
 });
 
@@ -59,27 +45,34 @@ userSchema.pre('save', async function(next) {
 
 const User = mongoose.model('User', userSchema);
 
-// ✅ Middleware
+// ✅ CORS setup for Vercel and local
+const allowedOrigins = ['http://localhost:3000', 'https://arts-wave.vercel.app'];
+
 app.use(cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: function(origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true
 }));
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// ✅ Serve static files
+// ✅ Static file setup (if needed for deployment)
 app.use('/assets', express.static(path.join(__dirname, '../client/assets'), { maxAge: '1y' }));
 app.use(express.static(path.join(__dirname, '../client')));
 
-// ✅ Home route
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../client/index.html'));
 });
 
-// ✅ Register route
+// ✅ Register Route
 app.post('/api/register', async(req, res) => {
     const { username, password } = req.body;
-
     if (!username || !password) {
         return res.status(400).json({ success: false, message: 'Username and password are required' });
     }
@@ -107,10 +100,9 @@ app.post('/api/register', async(req, res) => {
     }
 });
 
-// ✅ Login route
+// ✅ Login Route (no JWT, returns fake token)
 app.post('/api/login', async(req, res) => {
     const { username, password } = req.body;
-
     if (!username || !password) {
         return res.status(400).json({ success: false, message: 'Username and password are required' });
     }
@@ -129,9 +121,11 @@ app.post('/api/login', async(req, res) => {
         user.lastLogin = Date.now();
         await user.save();
 
+        // Send mock token
         res.json({
             success: true,
             message: 'Login successful',
+            token: 'mock-token-12345',
             user: {
                 username: user.username,
                 lastLogin: user.lastLogin
@@ -143,13 +137,12 @@ app.post('/api/login', async(req, res) => {
     }
 });
 
-// ✅ 404 fallback
+// ✅ 404 Handler
 app.use((req, res) => {
     res.status(404).json({ success: false, message: 'Endpoint not found' });
 });
 
-// ✅ Start server
+// ✅ Server Start
 app.listen(port, () => {
     console.log(`🚀 Server running on port ${port}`);
-    console.log(`🔗 http://localhost:${port}`);
 });
